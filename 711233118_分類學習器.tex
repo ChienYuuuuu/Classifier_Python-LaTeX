@@ -1,0 +1,416 @@
+\documentclass[12pt, a4paper]{article} 
+\input{preamble_CJK}
+
+\title{分類學習器的介紹}
+\author{{\SM 周芊妤}}
+\date{{\TT \today}} 	 
+\begin{document}
+\maketitle
+\fontsize{12}{22 pt}\selectfont
+
+分類學習器在機器學習中扮演著關鍵的角色，特別是在處理分類問題時，它們的目標是將數據點映射到事先定義的類別或標籤中。本文討論了三種常見的分類學習器\;：\;LDA、QDA和KNN，這些模型透過學習訓練數據的特徵和標籤之間的關係，能夠有效地預測和分類新的數據，這種學習能力讓這些模型能夠在不斷的優化中提高對未知數據的分類準確性，通過監督式學習框架持續增強模型的性能，這些模型在不同的應用場景中表現出色，從郵件過濾到圖像識別等各種領域都有廣泛的應用。
+
+\section{分類學習器\;:\;LDA、QDA與KNN介紹}
+\begin{enumerate}
+\item 線性判別分析(Linear Discriminant Analysis,\;LDA)\;:\\
+LDA是一種常用於多類別分類問題的線性分類器，其主要目標是尋找不同類別物體或事件特徵的線性組合，透過這種組合來區分類別，或者在後續分類任務中實現降維處理，該方法的核心思想是找到最佳投影方式，將數據點映射到一條直線（對於二維情況）或者超平面（對於多維情況），透過這樣的投影，它試圖讓不同類別的數據點在投影後盡可能地分開，其目標在於最大化類內差異性，同時最小化類間差異性，從而實現更有效的分類和區分。
+
+\item 二次判別式分析(Quadratic Discriminant Analysis,\;QDA)\;:\\
+QDA同樣用於處理分類問題，但QDA與LDA的區別在於對共變異數矩陣的處理方式，它允許每個類別擁有自己的共變異數矩陣，這意味著QDA不像LDA那樣假設所有類別共享相同的共變異數矩陣，這帶來了更大的靈活性，能夠更好地適應各種數據結構，然而這也可能導致需要更多的訓練數據來準確估計每個類別的共變異數矩陣。總而言之，QDA提供了更多的彈性和適應性，但在使用上需要更多的資料和更多的計算成本，根據數據的特性和問題的複雜性，選擇使用LDA還是QDA需要根據具體情況來衡量其優缺點。
+
+\item K-近鄰演算法(The K-Nearest Neighbors,\;KNN)\;:\\
+KNN是一種基於實例的學習方法，通過在訓練集中找出距離測試樣本最近的K個鄰居，以多數投票方式判斷該測試樣本的類別歸屬，其優勢在於直覺性和彈性，無需假設數據的分佈模型，僅考慮鄰居間的距離進行分類，KNN適用於非線性和複雜的問題，同時具有可解釋性，因為它直接使用訓練數據的實例進行預測，不涉及具體的模型參數。\\
+然而，KNN也有限制，在高維特徵空間中，由於「維度詛咒」，KNN的性能可能下降，因為距離計算變得更困難，同時它對離群值敏感，可能導致過度擬合訓練數據中的噪音。總體而言，KNN適用於小型且維度較低的數據集，能夠提供良好的預測性能，易於理解和實現，選擇使用KNN需要考慮數據特性和問題需求。
+\end{enumerate}
+
+\section{LDA資料散佈圖分界線}
+LDA假設不同類別的觀測值服從多變量常態分佈，並且所有類別的資料都有相同的共變異數矩陣。
+LDA通過以下幾個步驟來找到最佳的分類方向\;：
+\begin{enumerate}
+\item 計算每個類別的均值向量，此向量代表了每個類別在資料中的中心位置。
+\item 計算類內散佈矩陣，衡量了相同類別內資料點的分散程度，即同一類別內部資料點之間的變異量。
+\item 計算類間散佈矩陣，這個矩陣描述了不同類別之間的差異，衡量了不同類別之間的分離程度。
+\item 通過特徵分解兩個矩陣的線性組合，找到最佳的投影方向，即特徵向量，這個投影方向旨在最大化類間的分離程度和最小化類內的變異。
+\item 根據特徵值的大小，選擇最能區分不同類別的特徵向量，這將成為用於劃分不同類別的決策邊界。
+\item 將資料投影到這個決策方向上，並根據投影後的位置進行分類。
+\end{enumerate}
+總而言之，LDA的目標是找到一個能夠最好區分不同類別的線性投影方向，以使類別之間的距離最大化，同時類內資料的分散程度最小化，這個投影方向就是用來劃分不同類別的決策邊界。
+
+\begin{enumerate}
+\item 兩群資料的LDA散佈圖分界線\\
+生成兩群資料，圖\;\ref{fig:plot_21.png}\;中的兩筆資料分別是由A、B兩群所生出，它們的資料內容是\;:
+\begin{enumerate}
+\item A群\;:\;設定樣本數為\;$300$\;，中心點座標為\;$(-2,3)$\;，共變異數矩陣（Covariance Matrix）為\;$\begin{bmatrix}4 & 2 \\3 & 3 \end{bmatrix}$\;。
+\item B群\;:\;設定樣本數為\;$300$\;，中心點座標為\;$(2,3.6)$\;，共變異數矩陣為\;$\begin{bmatrix}4 & 2 \\3 & 3  \end{bmatrix}$\;。
+\end{enumerate}
+
+用下列Python語法來做出由LDA畫出兩群的資料散佈圖分界線\;:
+\begin{lstlisting}
+# Fit the Linear Discriminant Analysis (LDA) model
+lda = LinearDiscriminantAnalysis()
+lda.fit(X, y)
+# Extracting parameters from LDA
+coef = lda.coef_[0]
+intercept = lda.intercept_[0]
+# Compute the decision boundary
+x_vals = np.linspace(x_min, x_max, 100)
+y_vals = (-coef[0] / coef[1]) * x_vals - (intercept / coef[1])
+# Calculate misclassification rate of LDA
+predicted = lda.predict(X)
+misclassification_rate=np.sum(predicted != y)/len(y)
+\end{lstlisting}
+
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.8]{plot_21.png}
+\caption{兩群資料LDA分界線}
+\label{fig:plot_21.png}
+\end{figure}
+
+\item 三群資料的LDA散佈圖分界線\\
+生成三群資料，圖\;\ref{fig:plot_22.png}\;中的三筆資料分別是由粉色、綠色以及紫色三群所生出，它們的資料內容是\;:
+\begin{enumerate}
+\item 粉色\;:\;設定樣本數為\;$150$\;，中心點座標為\;$(0,-1)$\;，共變異數矩陣為\;$\begin{bmatrix}3 & 1.5 \\1.5 & 2.5 \end{bmatrix}$\;。
+\item 綠色\;:\;設定樣本數為\;$200$\;，中心點座標為\;$(2,4)$\;，共變異數矩陣為\;$\begin{bmatrix}3 & 1.5 \\1.5 & 2.5 \end{bmatrix}$\;。
+\item 橘色\;:\;設定樣本數為\;$180$\;，中心點座標為\;$(-3,3)$\;，共變異數矩陣為\;$\begin{bmatrix}3 & 1.5 \\1.5 & 2.5 \end{bmatrix}$\;。
+\end{enumerate}
+
+用下列Python語法來做出由LDA畫出三群的資料散佈圖分界線\;:
+\begin{lstlisting}
+# 使用 LDA 擬合數據
+model = LDA()
+model.fit(X, y)
+
+# 繪製邊界線
+h = 0.02 
+x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+\end{lstlisting}
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.8]{plot_22.png}
+\caption{三群資料LDA分界線}
+\label{fig:plot_22.png}
+\end{figure}
+\end{enumerate}
+
+
+\section{QDA資料散佈圖分界線}
+QDA和LDA有些相似，但它們的主要區別在於共變異數矩陣的假設，QDA假設每個類別擁有自己的共變異數矩陣，而LDA則假設所有類別共用相同的共變異數矩陣，這使得QDA的分類邊界不再是線性而是二次曲線或曲面。QDA的步驟與LDA相似：首先計算每個類別的均值向量，然後計算每個類別的共變異數矩陣，接下來，QDA使用這些共變異數矩陣計算每個類別的判別函數，這些函數形成了分類的邊界，通常這些判別函數是二次的，從而形成了二次曲線或曲面的分類邊界，總而言之，相較於LDA來說，QDA更具靈活性，因為它允許不同類別擁有不同的共變異數矩陣，導致了非線性的分類邊界。
+\begin{enumerate}
+\item 兩群資料的QDA散佈圖分界線\\
+圖\;\ref{fig:plot_23.png}\;中的兩筆資料分別是由A、B兩群所生出，它們的資料內容是\;:
+\begin{enumerate}
+\item 綠色\;:\;設定樣本數為\;$300$\;，中心點座標為\;$(-5,6)$\;，共變異數矩陣為\;$\begin{bmatrix}10 & 2.2 \\2.2 & 2.3 \end{bmatrix}$\;。
+\item 紫色\;:\;設定樣本數為\;$450$\;，中心點座標為\;$(4,3.6)$\;，共變異數矩陣為\;$\begin{bmatrix}4 & -1.3 \\-1.3 & 2 \end{bmatrix}$\;。
+\end{enumerate}
+
+用下列Python語法來做出由QDA畫出兩群的資料散佈圖分界線\;:
+\begin{lstlisting}
+# 使用 QDA 模型
+QDA = QuadraticDiscriminantAnalysis()
+QDA.fit(X, y)  
+
+# 繪製決策邊界
+nx, ny = 100, 100
+x_ = np.linspace(x_min, x_max, nx)
+y_ = np.linspace(y_min, y_max, ny)
+xx, yy = np.meshgrid(x_, y_)
+Z = QDA.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.8]{plot_23.png}
+\caption{兩群資料QDA分界線}
+\label{fig:plot_23.png}
+\end{figure}
+
+\item 三群資料的QDA散佈圖分界線\\
+圖\;\ref{fig:plot_24.png}\;中的三筆資料分別是由粉色、綠色以及紫色三群所生出，它們的資料內容是\;:
+\begin{enumerate}
+\item 粉色\;:\;設定樣本數為\;$150$\;，中心點座標為\;$(1,-3)$\;，共變異數矩陣為\;$\begin{bmatrix}2 & -0.5 \\-0.5 & 3 \end{bmatrix}$\;。
+\item 綠色\;:\;設定樣本數為\;$160$\;，中心點座標為\;$(2,4)$\;，共變異數矩陣為\;$\begin{bmatrix}3 & 2 \\2 & 2.5 \end{bmatrix}$\;。
+\item 紫色\;:\;設定樣本數為\;$180$\;，中心點座標為\;$(-3,3)$\;，共變異數矩陣為\;$\begin{bmatrix}3 & 3 \\3 & 5 \end{bmatrix}$\;。
+\end{enumerate}
+
+用下列Python語法來做出由QDA畫出三群的資料散佈圖分界線\;:
+\begin{lstlisting}
+# 使用 QDA 擬合資料
+model = QDA()
+model.fit(X, y)
+
+# 繪製決策邊界
+h = .02 
+x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.8]{plot_24.png}
+\caption{三群資料QDA分界線}
+\label{fig:plot_24.png}
+\end{figure}
+\end{enumerate}
+
+
+\section{KNN資料散佈圖分界線}
+KNN是一種監督式學習方法，基於實例進行分類，其分界線由訓練數據中的點構成，不存在明確的決策邊界，而是透過將空間分割成區域進行分類，該方法的核心原理是計算新數據點與訓練數據中各點的距離，將新數據點歸類為K個最近鄰居中最常見的類別，這樣的分類方式將空間劃分成以各類別點為中心的區域，這些區域可能呈現出不規則的形狀。\\
+要繪製KNN的分界線通常需要將空間劃分成網格，然後根據KNN算法中的鄰近點分類規則為每個網格賦予一個類別，最後，使用繪圖函數來視覺化這些區域。總體而言，KNN的分界線取決於鄰近點的分類規則和空間劃分的結果，通常呈現出不規則的形狀。
+
+\begin{enumerate}
+\item 兩群資料的KNN散佈圖分界線\\
+圖\;\ref{fig:parallel_k}\;中的兩筆資料分別是由A、B兩群所生出，它們的資料內容是\;:
+\begin{enumerate}
+\item A群\;:\;設定樣本數為\;$200$\;，中心點座標為\;$(-3,6)$\;，共變異數矩陣為\;$\begin{bmatrix}10 & 2.2 \\2.2 & 2.3 \end{bmatrix}$\;。
+\item B群\;:\;設定樣本數為\;$200$\;，中心點座標為\;$(4,4)$\;，共變異數矩陣為\;$\begin{bmatrix}4 & -1.3 \\-1.3 & 2 \end{bmatrix}$\;。
+\end{enumerate}
+
+用下列python語法來做出由KNN畫出兩群的資料散佈圖分界線(此處設\;$K=5$\;)\;:
+\begin{lstlisting}
+# KNN learning
+K = 5
+intrvl = 0.2  
+x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, intrvl), np.arange(y_min, y_max, intrvl))
+z = np.zeros(xx.size)  
+for i in range(xx.size):
+    tmp = np.tile([xx.ravel()[i], yy.ravel()[i]], (n, 1))
+    d = np.linalg.norm(tmp - X, axis=1)  
+    idx = np.argsort(d)  
+    z[i] = np.mean(y[idx[:K]]) 
+z = np.array([0 if i < 0.5 else 1 for i in z])  
+Z = z.reshape(xx.shape)
+\end{lstlisting}
+
+圖\;\ref{fig:parallel_k}\;(a)\;為\;$K=5$\;的情況，在這種情況下，每個預測點的分類是由其附近的\;$5$\;個最近鄰居決定的，這可能會使得邊界更具彎曲性和波動性，因為它較容易受到局部特徵的影響，這樣的模型可能對較小的資料變動更敏感，因為它會嘗試捕捉每個類別的細微變化。\\
+圖\;\ref{fig:parallel_k}\;(b)\;為\;$K=15$\;的情況，在這種情況下，會使模型更加平滑，這意味著模型的邊界可能會更加簡化，因為它考慮了更多鄰居的投票，這樣的模型更有可能捕捉到較大範圍內的特徵，因此可能對較大的資料趨勢做出更好的估計，但也可能忽略某些較小的特徵。\\
+總而言之，KNN 中\;$K$\;值的選擇需要在捕捉資料特徵與避免過度擬合之間取得平衡，更小的\;$K$\;值可能導致模型過度擬合，而較大的\;$K$\;值則可能導致模型過度簡化，要選擇最適合的\;$K$\;值，需要考慮數據集的大小、分佈和資料之間的複雜關係。
+
+\begin{figure}[H]
+\centering
+\subfloat[$K=5$]{
+\includegraphics[scale=0.41]{plot_28.png}}
+\subfloat[$K=15$]{
+\includegraphics[scale=0.41]{plot_25.png}}
+\caption{兩群資料KNN分界線}
+\label{fig:parallel_k}
+\end{figure}
+
+\item 三群資料的KNN散佈圖分界線\\
+圖\;\ref{fig:parallel_k1}\;中的三筆資料分別是由粉色、綠色以及紫色三群所生出，它們的資料內容是\;:
+\begin{enumerate}
+\item 粉色\;:\;設定樣本數為\;$150$\;，中心點座標為\;$(1,-2)$\;，共變異數矩陣為\;$\begin{bmatrix}5 & 2 \\2 & 3 \end{bmatrix}$\;。
+\item 綠色\;:\;設定樣本數為\;$160$\;，中心點座標為\;$(2,3)$\;，共變異數矩陣為\;$\begin{bmatrix}3 & -1 \\-1 & 2.5 \end{bmatrix}$\;。
+\item 紫色\;:\;設定樣本數為\;$180$\;，中心點座標為\;$(-3,2)$\;，共變異數矩陣為\;$\begin{bmatrix}3 & 3 \\3 & 5 \end{bmatrix}$\;。
+\end{enumerate}
+
+用下列python語法來做出由KNN畫出三群的資料散佈圖分界線(此處設\;$K=5$\;)\;:
+\begin{lstlisting}
+model = KNeighborsClassifier(n_neighbors=5)  #K=5
+model.fit(X, y)
+h = .02 
+x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+\end{lstlisting}
+
+圖\;\ref{fig:parallel_k1}\;(a)\;為\;$K=5$\;的情況、圖\;\ref{fig:parallel_k1}\;(b)\;為\;$K=15$\;的情況，同樣地，KNN 中\;$K$\;值越小可能導致模型過度擬合，而越大的\;$K$\;值則可能導致模型過度簡化，需要考慮數據集的大小、分佈和資料之間的複雜關係來選擇最適合的\;$K$\;值。
+
+\begin{figure}[H]
+\centering
+\subfloat[$K=5$]{
+\includegraphics[scale=0.41]{plot_26.png}}
+\subfloat[$K=15$]{
+\includegraphics[scale=0.41]{plot_27.png}}
+\caption{三群資料KNN分界線}
+\label{fig:parallel_k1}
+\end{figure}
+\end{enumerate}
+
+\section{訓練資料、測試資料的誤判率}
+在訓練機器學習模型時，會使用部分資料來訓練模型，再使用另一部分資料來測試模型的表現，當模型在訓練資料上進行預測時，如果預測結果與實際結果不符就會產生誤判，訓練資料的誤判率即是這些誤判的比率，而測試資料的誤判率是指模型在測試集上錯誤分類的比率，通常以百分比來表示。\\
+誤判率可由以下公式計算：$$\text{誤判率}=\frac{\text{錯誤預測的樣本數}}{\text{總樣本數}}×100\%$$
+
+接著，試著做訓練資料、測試資料的誤判率。
+\begin{enumerate}
+\item 共變異數矩陣相同的情況比較兩群資料 \\
+A群資料以及B群資料樣本數都為\;$300$\;，A群資料(中心為\;$(-2,3)$\;)以及B群資料(中心為\;$(2,3.6)$\;)兩群資料共變異數矩陣都為\;$\begin{bmatrix}4 & 2 \\2 & 3 \end{bmatrix}$\;。在此把資料樣本取\;$80\%$\;做為訓練資料、\;$20\%$\;做為測試資料，並用公式求出訓練資料、測試資料的誤判率，圖的上方為訓練資料，下方為測試資料\;:\\
+圖\;\ref{fig:plot_t1.png}\;是在上述的情況下去看\;LDA\;分界線的誤判率。在LDA模型下，訓練資料的誤判率為\;$12.92\%$\;、測試資料的誤判率為\;$10.83\%$\;。
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{plot_t1.png}
+\caption{兩群資料LDA分界線的誤判率}
+\label{fig:plot_t1.png}
+\end{figure}
+
+圖\;\ref{fig:plot_t2.png}\;是在上述的情況下去看\;QDA\;分界線的誤判率。在QDA模型下，訓練資料的誤判率為\;$12.92\%$\;、測試資料的誤判率為\;$10.83\%$\;。
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.6]{plot_t2.png}
+\caption{兩群資料QDA分界線的誤判率}
+\label{fig:plot_t2.png}
+\end{figure}
+
+圖\;\ref{fig:plot_t3.png}\;是在上述的情況下去看\;KNN\;分界線的誤判率，在這邊設\;$K=5$\;。在KNN模型下，訓練資料的誤判率為\;$12.29\%$\;、測試資料的誤判率為\;$10.00\%$\;。
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{plot_t3.png}
+\caption{兩群資料KNN分界線的誤判率}
+\label{fig:plot_t3.png}
+\end{figure}
+
+圖\;\ref{fig:plot_t4.png}\;是在上述的情況下去看\;KNN\;分界線的誤判率，在這邊設\;$K=15$\;。在KNN模型下，訓練資料的誤判率為\;$13.54\%$\;、測試資料的誤判率為\;$8.33\%$\;。
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{plot_t4.png}
+\caption{兩群資料KNN分界線的誤判率}
+\label{fig:plot_t4.png}
+\end{figure}
+
+因此，透過測試資料的錯判率比較，得出在共變異數矩陣都為\;$\begin{bmatrix}4 & 2 \\2 & 3 \end{bmatrix}$\;的情況比較兩群資料時，使用KNN模型，並且\;$K=15$\;時是最好的。
+
+\item 共變異數矩陣不同的情況比較兩群資料\\
+A群資料以及B群資料樣本數都為\;$300$\;，A群資料(中心為\;$(-2,3)$\;)以及B群資料(中心為\;$(2,3.6)$\;)兩群資料共變異數矩陣都為\;$\begin{bmatrix}4 & 2 \\2 & 3 \end{bmatrix}$\;。把資料樣本取\;$80\%$\;做為訓練資料、\;$20\%$\;做為測試資料，並用公式求出訓練資料、測試資料的誤判率，圖的上方為訓練資料，下方為測試資料\;:\\
+首先，A群資料中心為\;$(-2,3)$\;、B群資料中心為\;$(2,3.6)$\;，並且A群資料共變異數矩陣為\;$\begin{bmatrix}4 & 2 \\2 & 3 \end{bmatrix}$\;、B群資料共變異數矩陣為\;$\begin{bmatrix}2 & -1 \\-1 & 4 \end{bmatrix}$\;，為資料樣本取\;$80\%$\;做為訓練資料、\;$20\%$\;做為測試資料，並用公式求出訓練資料、測試資料的誤判率，圖的上方為訓練資料，下方為測試資料，\;:
+圖\;\ref{fig:plot_t6.png}\;是在上述的情況下去看\;LDA\;分界線的誤判率。在LDA模型下，訓練資料的誤判率為\;$13.75\%$\;、測試資料的誤判率為\;$10.83\%$\;。
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{plot_t6.png}
+\caption{兩群資料LDA分界線的誤判率}
+\label{fig:plot_t6.png}
+\end{figure}
+
+圖\;\ref{fig:plot_t7.png}\;是在上述的情況下去看\;QDA\;分界線的誤判率。在QDA模型下，訓練資料的誤判率為\;$12.50\%$\;、測試資料的誤判率為\;$10.00\%$\;。
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.6]{plot_t7.png}
+\caption{兩群資料QDA分界線的誤判率}
+\label{fig:plot_t7.png}
+\end{figure}
+
+圖\;\ref{fig:plot_t8.png}\;是在上述的情況下去看\;KNN\;分界線的誤判率，在這邊設\;$K=5$\;。在KNN模型下，訓練資料的誤判率為\;$10.21\%$\;、測試資料的誤判率為\;$15.83\%$\;。\\
+圖\;\ref{fig:plot_t9.png}\;是在上述的情況下去看\;KNN\;分界線的誤判率，這邊設\;$K=15$\;。在KNN模型下，訓練資料的誤判率為\;$11.67\%$\;、測試資料的誤判率為\;$18.33\%$\;。\\
+因此，透過測試資料的錯判率比較，得出在共變異數矩陣不相同的情況比較兩群資料時，使用QDA模型是最好的。
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{plot_t8.png}
+\caption{兩群資料KNN分界線的誤判率}
+\label{fig:plot_t8.png}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{plot_t9.png}
+\caption{兩群資料KNN分界線的誤判率}
+\label{fig:plot_t9.png}
+\end{figure}
+
+
+
+
+
+\item 共變異數矩陣相同的情況比較三群資料\\
+樣本數為A群\;$150$\;、B群\;$200$\;、C群\;$180$\;，中心為A群\;$(0, -1)$\;、B群\;$(2,4)$\;、C群\;$(-2,3.5)$\;，這邊A群、B群還有C群的共變異數矩陣都為\;$\begin{bmatrix}3 & 1 \\1 & 2 \end{bmatrix}$\;。把資料樣本取\;$80\%$\;做為訓練資料、\;$20\%$\;做為測試資料，並用公式求出訓練資料、測試資料的誤判率\;:\\
+圖\;\ref{fig:plot_t13.png}\;是在上述的情況下去看\;LDA\;分界線的誤判率。在LDA模型下，訓練資料的誤判率為\;$18.87\%$\;、測試資料的誤判率為\;$16.04\%$\;。
+
+\begin{figure}[h]
+\centering
+ \includegraphics[scale=0.6]{plot_t13.png}
+\caption{三群資料LDA分界線的誤判率}
+\label{fig:plot_t13.png}
+\end{figure}
+
+圖\;\ref{fig:plot_t14.png}\;是在上述的情況下去看\;QDA\;分界線的誤判率。在QDA模型下，訓練資料的誤判率為\;$19.58\%$\;、測試資料的誤判率為\;$24.53\%$\;。\\
+圖\;\ref{fig:plot_t15.png}\;是在上述的情況下去看\;KNN\;分界線的誤判率，這邊設\;$K=5$\;。在KNN模型下，訓練資料的誤判率為\;$16.04\%$\;、測試資料的誤判率為\;$19.81\%$\;。\\
+圖\;\ref{fig:plot_t16.png}\;是在上述的情況下去看\;KNN\;分界線的誤判率，這邊設\;$K=15$\;。在KNN模型下，訓練資料的誤判率為\;$19.10\%$\;、測試資料的誤判率為\;$19.81\%$\;。
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{plot_t14.png}
+\caption{三群資料QDA分界線的誤判率}
+\label{fig:plot_t14.png}
+\end{figure}
+
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.6]{plot_t15.png}
+\caption{三群資料KNN分界線的誤判率}
+\label{fig:plot_t15.png}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{plot_t16.png}
+\caption{三群資料KNN分界線的誤判率}
+\label{fig:plot_t16.png}
+\end{figure}
+
+因此，透過測試資料的錯判率比較，得出在共變異數矩陣都為\;$\begin{bmatrix}3 & 1 \\1 & 2 \end{bmatrix}$\;的情況比較三群資料時，使用LDA模型是最好的。
+  
+  
+  
+  
+
+\item 共變異數矩陣不同的情況比較三群資料\\
+首先，A群的樣本數為\;$150$\;、B群的樣本數為\;$200$\;、C群的樣本數為\;$180$\;，再來，A群的中心為\;$(0, -1)$\;、B群的中心為\;$(2,4)$\;、C群的中心為\;$(-2,3.5)$\;，A群的共變異數矩陣都為\;$\begin{bmatrix}3 & 1 \\1 & 2 \end{bmatrix}$\;、B群的共變異數矩陣都為\;$\begin{bmatrix}4 & 2 \\2 & 5 \end{bmatrix}$\;、C群的共變異數矩陣都為\;$\begin{bmatrix}6 & 3 \\3 & 4 \end{bmatrix}$\;，把資料樣本取\;$80\%$\;做為訓練資料、\;$20\%$\;做為測試資料，並用公式求出訓練資料、測試資料的誤判率，圖的上方為訓練資料，下方為測試資料\;:\\
+圖\;\ref{fig:plot_t5.png}\;是在上述的情況下去看\;LDA\;分界線的誤判率。在LDA模型下，訓練資料的誤判率為\;$17.92\%$\;、測試資料的誤判率為\;$15.09\%$\;。
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.68]{plot_t5.png}
+\caption{三群資料LDA分界線的誤判率}
+\label{fig:plot_t5.png}
+\end{figure}
+
+圖\;\ref{fig:plot_t10.png}\;是在上述的情況下去看\;QDA\;分界線的誤判率。在QDA模型下，訓練資料的誤判率為\;$16.75\%$\;、測試資料的誤判率為\;$13.21\%$\;。
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.68]{plot_t10.png}
+\caption{三群資料QDA分界線的誤判率}
+\label{fig:plot_t10.png}
+\end{figure}
+
+圖\;\ref{fig:plot_t11.png}\;是在上述的情況下去看\;KNN\;分界線的誤判率，在這邊設\;$K=5$\;。在KNN模型下，訓練資料的誤判率為\;$15.80\%$\;、測試資料的誤判率為\;$20.75\%$\;。
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.68]{plot_t11.png}
+\caption{三群資料KNN分界線的誤判率}
+\label{fig:plot_t11.png}
+\end{figure}
+
+圖\;\ref{fig:plot_t12.png}\;是在上述的情況下去看\;KNN\;分界線的誤判率，在這邊設\;$K=15$\;。在KNN模型下，訓練資料的誤判率為\;$16.51\%$\;、測試資料的誤判率為\;$15.09\%$\;。\\
+因此，透過測試資料的錯判率比較，得出在共變異數矩陣不相同的情況比較三群資料時，使用QDA模型是最好的。
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.68]{plot_t12.png}
+\caption{三群資料KNN分界線的誤判率}
+\label{fig:plot_t12.png}
+\end{figure}
+
+\end{enumerate}
+
+\section{結論}
+本文強調了類別學習器在分析資料和進行分類任務中的關鍵性質和用途，當討論類別學習器時，可以著重於它們在分類問題中的應用以及模型之間的差異，不得不提的模型包括LDA、QDA和KNN。LDA著重於找到最佳的線性組合，以區分不同類別，其目標在於最大化類別之間的差異，同時最小化類別內部的差異；QDA允許不同類別之間的協方差矩陣不同，提供更多彈性以處理非線性和更複雜的資料關係；KNN是根據最靠近的鄰居來預測新資料的類別。\\
+透過不同類別學習器的運用，在特徵空間中繪製了分類邊界，進而預測新資料點的所屬類別。同時，根據模型的預測能力計算出了準確率，以確定哪個模型最適合該資料集。這種方法不僅有助於理解不同類別學習器的特性和運作方式，還提供了對於資料分類和預測的可靠工具，進一步深化了對資料特性和分類趨勢的理解。
+\end{document}
+
+
+
+
+
